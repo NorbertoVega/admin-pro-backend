@@ -1,0 +1,6 @@
+npm init -y
+npm i express --save
+npm i -g nodemon
+npm i mongoose
+npm i dotenv
+npm i cors
