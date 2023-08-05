@@ -4,3 +4,6 @@ npm i -g nodemon
 npm i mongoose
 npm i dotenv
 npm i cors
+npm i express-validator
+npm i bcryptjs
+npm i jsonwebtoken
