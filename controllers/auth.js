@@ -1,14 +1,16 @@
 const { response } = require('express');
-const Usuario = require('../models/usuario');
 const bcrypt = require('bcryptjs');
-const { generarJWT } = require('../helpers/jwt'); 
+
+const Usuario = require('../models/usuario');
+const { generarJWT } = require('../helpers/jwt');
+const { googleVerify } = require('../helpers/google-verify');
 
 const login = async (req, res = response) => {
 
     const { email, password } = req.body;
 
     try {
-        
+
         // Verificar email
         const usuarioDB = await Usuario.findOne({ email });
         if (!usuarioDB) {
@@ -21,7 +23,7 @@ const login = async (req, res = response) => {
         // Verificar contraseña
         const validPassword = bcrypt.compareSync(password, usuarioDB.password);
         if (!validPassword) {
-            return  res.status(400).json({
+            return res.status(400).json({
                 ok: false,
                 msg: 'Password no valido'
             });
@@ -35,7 +37,7 @@ const login = async (req, res = response) => {
             token
         });
     }
-    catch(error) {
+    catch (error) {
         console.log(error);
         res.status(500).json({
             ok: false,
@@ -44,4 +46,51 @@ const login = async (req, res = response) => {
     }
 }
 
-module.exports = { login }
+const googleSignIn = async (req, res = response) => {
+
+    try {
+        const { token } = req.body;
+        const { email, name, picture } = await googleVerify(token);
+
+        const usuarioDB = await Usuario.findOne({ email });
+        let usuario;
+
+        if (!usuarioDB) {
+            usuario = new Usuario({ 
+                nombre: name,
+                email: email,
+                password: '@@@',
+                img: picture,
+                google: true
+             });
+        }
+        else {
+            usuario = usuarioDB;
+            usuario.google = true;
+        }
+
+        await usuario.save();
+
+        // Genear token
+        const jwt = await generarJWT(usuario.id);
+
+        res.json({
+            ok: true,
+            email, name, picture,
+            jwt
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok: false,
+            msg: 'Error inesperado'
+        });
+    }
+
+}
+
+module.exports = {
+    login,
+    googleSignIn
+}
