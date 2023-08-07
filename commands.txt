@@ -7,3 +7,5 @@ npm i cors
 npm i express-validator
 npm i bcryptjs
 npm i jsonwebtoken
+npm i express-fileupload
+npm i uuid

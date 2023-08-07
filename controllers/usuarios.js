@@ -1,16 +1,35 @@
 const Usuario = require('../models/usuario');
 const { response } = require('express');
 const bcrypt = require('bcryptjs');
-const { generarJWT } = require('../helpers/jwt'); 
+const { generarJWT } = require('../helpers/jwt');
 
 const getUsuarios = async (req, res) => {
 
-    const usuarios = await Usuario.find({}, 'nombre email role google');
+    try {
 
-    res.json({
-        ok: true,
-        usuarios,
-    });
+        const desde = Number(req.query.desde) || 0;
+
+        const [usuarios, total] = await Promise.all([
+            Usuario
+                .find({}, 'nombre email role google img')
+                .skip(desde)
+                .limit(5),
+            Usuario.countDocuments()
+        ]);
+
+        res.json({
+            ok: true,
+            usuarios,
+            total
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok: false,
+            msg: 'Error inesperado'
+        });
+    }
 }
 
 const crearUsuario = async (req, res = response) => {
@@ -37,7 +56,7 @@ const crearUsuario = async (req, res = response) => {
         await usuario.save();
 
         const token = await generarJWT(usuario.id);
-        
+
         res.json({
             ok: true,
             usuario,
